@@ -44,19 +44,14 @@ module params_mod
   logical qcon_modified ! Switch whether quadratic conservation modification is added
 
   ! Options:
-  ! - csp1
   ! - csp2
   ! - isp
   ! - none
   character(30) split_scheme
 
-  logical :: use_zonal_reduce = .true.
-  logical :: reduce_adv_lon = .true.
-  integer :: zonal_reduce_factors(20) = 0
-
   logical is_restart_run
 
-  logical :: use_zonal_tend_filter = .true.
+  logical :: use_zonal_tend_filter = .false.
   integer :: zonal_tend_filter_cutoff_wavenumber(20) = 0
 
   namelist /dycore_params/ &
@@ -81,12 +76,10 @@ module params_mod
     time_order, &
     qcon_modified, &
     split_scheme, &
-    use_zonal_reduce, &
-    reduce_adv_lon, &
-    zonal_reduce_factors, &
     use_zonal_tend_filter, &
     zonal_tend_filter_cutoff_wavenumber, &
     use_diffusion, &
+    diffusion_order, &
     diffusion_coef
 
 contains

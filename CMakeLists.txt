@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
 project(gamil-dycore LANGUAGES Fortran)
 
+option(AVERAGE_CORIOLIS "Set macro AVERAGE_CORIOLIS" OFF)
+
+if (AVERAGE_CORIOLIS)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -DAVERAGE_CORIOLIS")
+endif ()
+
 find_package(MPI)
 if (NOT MPI_Fortran_FOUND)
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -DNO_MPI")
@@ -50,14 +56,13 @@ set(source_files
   src/log_mod.F90
   src/params_mod.F90
   src/mesh_mod.F90
-  src/diffusion_mod.F90
   src/parallel_mod.F90
-  src/reduce_mod.F90
   src/types_mod.F90
   src/diag_mod.F90
   src/history_mod.F90
   src/restart_mod.F90
   src/data_mod.F90
+  src/diffusion_mod.F90
   src/filter_mod.F90
   src/dycore_mod.F90
   src/dycore_test.F90
@@ -72,13 +77,10 @@ set(source_files
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/.mods")
 
 add_executable(dycore_test.exe ${source_files})
+target_link_libraries(dycore_test.exe
+  ${MPI_Fortran_LIBRARIES} fortran_datetime fortran_container fftpack netcdf netcdff)
 if (MPI_Fortran_FOUND)
-  target_link_libraries(dycore_test.exe
-    ${MPI_Fortran_LIBRARIES} fortran_datetime fortran_container fftpack netcdf netcdff)
   set_target_properties(dycore_test.exe PROPERTIES
     LINK_FLAGS "${MPI_Fortran_LINK_FLAGS}"
   )
-else ()
-  target_link_libraries(dycore_test.exe
-    fortran_datetime fortran_container fftpack netcdf netcdff)
 endif ()

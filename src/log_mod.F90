@@ -27,8 +27,7 @@ contains
 
     select type (value)
     type is (integer)
-    type is (real(4))
-    type is (real(8))
+    type is (real)
     class default
       call log_error('Unsupported diagnostic value type!')
     end select
@@ -42,7 +41,7 @@ contains
     integer, intent(in), optional :: line
 
     if (present(file) .and. present(line)) then
-      write(6, *) '[Notice]: ' // trim(file) // ':' // trim(to_string(line)) // ': ' // trim(message)
+      write(6, *) '[Notice]: ' // trim(file) // ': ' // to_string(line) // ': ' // trim(message)
     else
       write(6, *) '[Notice]: ' // trim(message)
     end if
@@ -56,7 +55,7 @@ contains
     integer, intent(in), optional :: line
 
     if (present(file) .and. present(line)) then
-      write(6, *) '[Warning]: ' // trim(file) // ':' // trim(to_string(line)) // ': ' // trim(message)
+      write(6, *) '[Warning]: ' // trim(file) // ': ' // to_string(line) // ': ' // trim(message)
     else
       write(6, *) '[Warning]: ' // trim(message)
     end if
@@ -70,7 +69,7 @@ contains
     integer, intent(in), optional :: line
 
     if (present(file) .and. present(line)) then
-      write(6, *) '[Error]: ' // trim(file) // ':' // trim(to_string(line)) // ': ' // trim(message)
+      write(6, *) '[Error]: ' // trim(file) // ': ' // to_string(line) // ': ' // trim(message)
     else
       write(6, *) '[Error]: ' // trim(message)
     end if
@@ -82,16 +81,14 @@ contains
 
     type(hash_table_iterator_type) iter
 
-    write(6, '(" => ", A)', advance='no') trim(curr_time%isoformat())
+    write(6, '(" => ", A)', advance='no') trim(curr_time_format)
 
     iter = hash_table_iterator(diags)
     do while (.not. iter%ended())
       select type (value => iter%value)
       type is (integer)
         write(6, '(X, A)', advance='no') trim(to_string(value))
-      type is (real(4))
-        write(6, '(X, A)', advance='no') trim(to_string(value, 20))
-      type is (real(8))
+      type is (real)
         write(6, '(X, A)', advance='no') trim(to_string(value, 20))
       class default
         write(6, '(X, A)', advance='no') iter%key

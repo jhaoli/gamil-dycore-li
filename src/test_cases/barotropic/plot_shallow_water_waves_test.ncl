@@ -51,14 +51,14 @@ res_v@gsnLeftString = "V (m/s)"
 res_v@lbLabelBarOn = True
 
 days = 0
-time_step = 30
+time_step = 1
 do t = 0, dimsizes(file_names) - 1, time_step
   system("echo '=> " + file_names(t) + "'")
   f = addfile(file_names(t), "r")
 
   time = f->time
 
-  h = f->gh(0,:,:) - 5.0e4
+  h = f->gd(0,:,:) - 5.0e4
   h = h / max(abs(h))
   h!0 = "lat"
   h!1 = "lon"
@@ -88,7 +88,7 @@ do t = 0, dimsizes(file_names) - 1, time_step
 
   gsn_panel(wks, (/plot0, plot1, plot2/), (/3, 1/), False)
 
-  days = days + time_step
+  days = days + time_step * 30
 end do
 
 ; res_hov = True

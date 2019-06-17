@@ -71,11 +71,7 @@ contains
     character(10) fmt
 
     w = merge(decimal_width, 4, present(decimal_width))
-    if (x >= 0) then
-      write(fmt, "('(E', I0, '.', I0, ')')") w, w-6
-    else
-      write(fmt, "('(E', I0, '.', I0, ')')") w, w-7
-    end if
+    write(fmt, "('(E', I0, '.', I0, ')')") w, w-6
     write(res, fmt) x
 
   end function real8_to_string
