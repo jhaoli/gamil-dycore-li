@@ -50,15 +50,15 @@ set(source_files
   src/log_mod.F90
   src/params_mod.F90
   src/mesh_mod.F90
+  src/diffusion_mod.F90
   src/parallel_mod.F90
+  src/reduce_mod.F90
   src/types_mod.F90
   src/diag_mod.F90
   src/history_mod.F90
   src/restart_mod.F90
   src/data_mod.F90
-  src/diffusion_mod.F90
   src/filter_mod.F90
-  src/weno_mod.F90
   src/dycore_mod.F90
   src/dycore_test.F90
   src/test_cases/barotropic/rossby_haurwitz_wave_test_mod.F90

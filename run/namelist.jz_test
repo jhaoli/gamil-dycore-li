@@ -13,6 +13,9 @@ time_scheme = 'predict_correct' ! 'predict_correct' or 'runge_kutta'
 qcon_modified = .true.
 split_scheme = '' ! 'csp2' or 'csp1' or 'isp'
 subcycles = 6
-use_diffusion = .false.
-diffusion_coef = 1.0e5
+use_zonal_reduce = .false.
+use_zonal_tend_filter = .false.
+zonal_tend_filter_cutoff_wavenumber = 4, 4, 4
+use_diffusion= .false.
+diffusion_coef=1.0E05
 /

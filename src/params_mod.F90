@@ -18,11 +18,10 @@ module params_mod
   logical :: use_diffusion = .false.
   real diffusion_coef
   integer :: diffusion_order = 2
-
-  integer :: run_days    = 0
-  integer :: run_hours   = 0
+ 
+  integer :: run_days = 0
+  integer :: run_hours = 0
   integer :: run_minutes = 0
-  integer :: run_seconds = 0
   integer :: start_time(5) = [0, 0, 0, 0, 0]
   integer :: end_time(5) = [0, 0, 0, 0, 0]
   character(30) :: time_units = 'days'
@@ -51,14 +50,9 @@ module params_mod
   ! - none
   character(30) split_scheme
 
-  ! Options:
-  ! - center_diff
-  ! - upwind
-  ! - weno
-  character(30) :: uv_adv_scheme = 'center_diff'
-  real :: uv_adv_upwind_lon_beta = 0.0
-  real :: uv_adv_upwind_lat_beta = 0.5
-  integer :: weno_order = 2
+  logical :: use_zonal_reduce = .true.
+  logical :: reduce_adv_lon = .true.
+  integer :: zonal_reduce_factors(20) = 0
 
   logical is_restart_run
 
@@ -72,7 +66,6 @@ module params_mod
     run_days, &
     run_hours, &
     run_minutes, &
-    run_seconds, &
     start_time, &
     end_time, &
     time_units, &
@@ -88,13 +81,12 @@ module params_mod
     time_order, &
     qcon_modified, &
     split_scheme, &
-    uv_adv_scheme, &
-    uv_adv_upwind_lon_beta, &
-    uv_adv_upwind_lat_beta, &
+    use_zonal_reduce, &
+    reduce_adv_lon, &
+    zonal_reduce_factors, &
     use_zonal_tend_filter, &
     zonal_tend_filter_cutoff_wavenumber, &
     use_diffusion, &
-    diffusion_order, &
     diffusion_coef
 
 contains
