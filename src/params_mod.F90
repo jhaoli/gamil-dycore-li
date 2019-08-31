@@ -51,6 +51,9 @@ module params_mod
   ! - none
   character(30) split_scheme
 
+  logical :: use_zonal_reduce = .false.
+  integer :: zonal_reduce_factors(20) = 0
+
   ! Options:
   ! - center_diff
   ! - upwind

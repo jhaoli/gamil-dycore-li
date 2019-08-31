@@ -22,6 +22,7 @@ module diag_mod
   type diag_type
     real total_mass
     real total_energy
+    real total_enstrophy
     real, allocatable :: vor(:,:)
     real, allocatable :: div(:,:)
   end type diag_type
@@ -45,6 +46,8 @@ contains
 
     real vm1, vp1, um1, up1
     integer i, j
+    real hd_cornor(parallel%half_lon_start_idx: parallel%half_lon_end_idx, &
+                   parallel%half_lat_start_idx: parallel%half_lat_end_idx )
 
     do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
@@ -59,14 +62,32 @@ contains
 
     do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
       do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-        um1 = state%u(i,j)
-        up1 = state%u(i,j+1)
+        um1 = state%u(i,j) * mesh%full_cos_lat(j)
+        up1 = state%u(i,j+1) * mesh%full_cos_lat(j+1)
         vm1 = state%v(i,j)
         vp1 = state%v(i+1,j)
         diag%vor(i,j) = (vp1 - vm1) / coef%half_dlon(j) - (up1 - um1) / coef%half_dlat(j)
       end do
     end do
     call parallel_fill_halo(diag%vor, all_halo=.true.)
+
+    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
+      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
+        hd_cornor(i,j) = 0.25 * (state%gd(i,j) + state%gd(i+1,j) + state%gd(i,j+1) + state%gd(i+1,j+1)) / g
+      end do
+    end do 
+    diag%total_enstrophy = 0.0
+     do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
+      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
+        diag%total_enstrophy = diag%total_enstrophy + 0.5 *(diag%vor(i,j) + coef%half_f(j))**2 / hd_cornor(i,j) * mesh%dlon * mesh%dlat * mesh%half_cos_lat(j)
+      end do
+    end do 
+    diag%total_enstrophy = diag%total_enstrophy * radius**2
+
+    if (ieee_is_nan(diag%total_enstrophy)) then
+      call log_error('Total potential total_enstrophy is NaN!')
+    end if
+
 
     diag%total_mass = 0.0
     do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
@@ -117,7 +138,7 @@ contains
         res = res + (state%gd(i,j) + static%ghs(i,j))**2 * mesh%full_cos_lat(j)
       end do
     end do
-
+    res = res * 0.5 * radius**2
   end function diag_total_energy
 
 end module diag_mod
