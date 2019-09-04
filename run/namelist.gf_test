@@ -1,17 +1,17 @@
 &dycore_params
 test_case = 'steady_geostrophic_flow'
-case_name = 'gf_c_u_01.180x91.d240'
+case_name = 'gf_c_u_01.360x181.d120'
 case_desc = 'Steady_geostrophic flow test'
 author = 'Li Dong <dongli@lasg.iap.ac.cn>'
-run_days = 30
-num_lon = 180
-num_lat = 91
-time_step_size = 240
-history_periods = '1 days'
+run_days = 1
+num_lon = 360
+num_lat = 181
+time_step_size = 120
+history_periods = '120 seconds'
 restart_period = '10 days'
 time_scheme = 'predict_correct' ! 'predict_correct' or 'runge_kutta2'
 uv_adv_scheme = 'center_diff' ! 'center_diff' or 'upwind' or 'weno'
-qcon_modified = .true.
+qcon_modified = .false.
 split_scheme = '' ! 'csp2' or 'csp1' or 'isp'
 subcycles = 8
 use_zonal_tend_filter = .true.
