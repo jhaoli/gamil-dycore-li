@@ -55,6 +55,12 @@ module types_mod
     real, allocatable :: ghs(:,:) ! Surface geopotential
   end type static_type
 
+  type force_type
+    real, allocatable :: u(:,:)
+    real, allocatable :: v(:,:)
+    real, allocatable :: gd(:,:)
+  end type force_type
+
   type tend_type
     real, allocatable :: u_adv_lon(:,:)
     real, allocatable :: u_adv_lat(:,:)
@@ -69,6 +75,7 @@ module types_mod
     real, allocatable :: du(:,:)
     real, allocatable :: dv(:,:)
     real, allocatable :: dgd(:,:)
+    type(force_type)  force
   end type tend_type
 
   interface allocate_data
@@ -166,6 +173,9 @@ contains
     if (.not. allocated(tend%mass_div_lon)) call parallel_allocate(tend%mass_div_lon)
     if (.not. allocated(tend%mass_div_lat)) call parallel_allocate(tend%mass_div_lat)
     if (.not. allocated(tend%dgd))          call parallel_allocate(tend%dgd)
+    if (.not. allocated(tend%force%u))      call parallel_allocate(tend%force%u,        half_lon=.true.)
+    if (.not. allocated(tend%force%v))      call parallel_allocate(tend%force%v,        half_lat=.true.)
+    if (.not. allocated(tend%force%gd))     call parallel_allocate(tend%force%gd)
 
   end subroutine allocate_tend_data
 
@@ -223,6 +233,9 @@ contains
     if (allocated(tend%du))           deallocate(tend%du)
     if (allocated(tend%dv))           deallocate(tend%dv)
     if (allocated(tend%dgd))          deallocate(tend%dgd)
+    if (allocated(tend%force%u))      deallocate(tend%force%u)
+    if (allocated(tend%force%v))      deallocate(tend%force%v)
+    if (allocated(tend%force%gd))     deallocate(tend%force%gd)    
 
   end subroutine deallocate_tend_data
 
