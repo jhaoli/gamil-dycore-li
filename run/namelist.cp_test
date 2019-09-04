@@ -1,6 +1,6 @@
 &dycore_params
 test_case = 'cross_polar_flow'
-case_name = 'gf_c_u_01.180x91.d20'
+case_name = 'cp_c_u_01.180x91.d20'
 case_desc = 'Cross polar flow test'
 author = 'Li Dong <dongli@lasg.iap.ac.cn>'
 run_days = 10
