@@ -14,6 +14,6 @@ uv_adv_scheme = 'center_diff' ! 'center_diff' or 'upwind' or 'weno'
 qcon_modified = .true.
 split_scheme = '' ! 'csp2' or 'csp1' or 'isp'
 subcycles = 8
-use_zonal_tend_filter = .true.
+use_zonal_tend_filter = .false.
 zonal_tend_filter_cutoff_wavenumber = 4, 4, 4
 /

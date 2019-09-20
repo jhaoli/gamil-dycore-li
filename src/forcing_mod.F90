@@ -46,7 +46,7 @@ contains
       end do 
       call parallel_fill_halo(tend%force%v, all_halo=.true.)
 
-      
+
       do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
         heqm = h0 + dh * (1 - mesh%full_sin_lat(j)**2) 
         do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
