@@ -105,7 +105,7 @@ contains
     call iap_transform(state(old))
 
     call diag_run(state(old))
-    call output(state(old))
+    call history_write(state(old), static, diag)
     call log_add_diag('total_mass', diag%total_mass)
     call log_add_diag('total_energy', diag%total_energy)
     call log_step()
@@ -159,7 +159,7 @@ contains
 
     if (time_is_alerted('hist0.output')) call history_write(state, static, diag)
     ! call history_write(state, static, diag)
-    if (time_is_alerted('restart.output')) call restart_write(state, static)
+    ! if (time_is_alerted('restart.output')) call restart_write(state, static)
 
   end subroutine output
 
