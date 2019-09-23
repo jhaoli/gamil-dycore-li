@@ -1,0 +1,168 @@
+The MPI test test_mpi for Fortran in mode F77_HEADER failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_4af17/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_4af17.dir/build.make CMakeFiles/cmTC_4af17.dir/build
+Building Fortran object CMakeFiles/cmTC_4af17.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_4af17.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_4af17
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4af17.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_4af17.dir/test_mpi.f90.o  -o cmTC_4af17 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_4af17] Error 1
+make: *** [cmTC_4af17/fast] Error 2
+
+
+
+The MPI test test_mpi for Fortran in mode F90_MODULE failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ee8f0/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_ee8f0.dir/build.make CMakeFiles/cmTC_ee8f0.dir/build
+Building Fortran object CMakeFiles/cmTC_ee8f0.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_ee8f0.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_ee8f0
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ee8f0.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_ee8f0.dir/test_mpi.f90.o  -o cmTC_ee8f0 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_ee8f0] Error 1
+make: *** [cmTC_ee8f0/fast] Error 2
+
+
+
+The MPI test test_mpi for Fortran in mode F08_MODULE failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_d55be/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_d55be.dir/build.make CMakeFiles/cmTC_d55be.dir/build
+Building Fortran object CMakeFiles/cmTC_d55be.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_d55be.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_d55be
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d55be.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_d55be.dir/test_mpi.f90.o  -o cmTC_d55be 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_f08_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_f08_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_d55be] Error 1
+make: *** [cmTC_d55be/fast] Error 2
+
+
+
+The MPI test test_mpi for Fortran in mode F77_HEADER_NOKIND failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_526bd/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_526bd.dir/build.make CMakeFiles/cmTC_526bd.dir/build
+Building Fortran object CMakeFiles/cmTC_526bd.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_526bd.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_526bd
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_526bd.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_526bd.dir/test_mpi.f90.o  -o cmTC_526bd 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_526bd] Error 1
+make: *** [cmTC_526bd/fast] Error 2
+
+
+
+The MPI test test_mpi for Fortran in mode F77_HEADER failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_9dfeb/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_9dfeb.dir/build.make CMakeFiles/cmTC_9dfeb.dir/build
+Building Fortran object CMakeFiles/cmTC_9dfeb.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_9dfeb.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_9dfeb
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9dfeb.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_9dfeb.dir/test_mpi.f90.o  -o cmTC_9dfeb 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_9dfeb] Error 1
+make: *** [cmTC_9dfeb/fast] Error 2
+
+
+
+The MPI test test_mpi for Fortran in mode F90_MODULE failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_849eb/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_849eb.dir/build.make CMakeFiles/cmTC_849eb.dir/build
+Building Fortran object CMakeFiles/cmTC_849eb.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_849eb.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_849eb
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_849eb.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_849eb.dir/test_mpi.f90.o  -o cmTC_849eb 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_849eb] Error 1
+make: *** [cmTC_849eb/fast] Error 2
+
+
+
+The MPI test test_mpi for Fortran in mode F08_MODULE failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_badeb/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_badeb.dir/build.make CMakeFiles/cmTC_badeb.dir/build
+Building Fortran object CMakeFiles/cmTC_badeb.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_badeb.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_badeb
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_badeb.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_badeb.dir/test_mpi.f90.o  -o cmTC_badeb 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_f08_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_f08_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_badeb] Error 1
+make: *** [cmTC_badeb/fast] Error 2
+
+
+
+The MPI test test_mpi for Fortran in mode F77_HEADER_NOKIND failed to compile with the following output:
+Change Dir: /Users/hao/work/gamil-dycore/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_bd5ec/fast && /Applications/Xcode.app/Contents/Developer/usr/bin/make -f CMakeFiles/cmTC_bd5ec.dir/build.make CMakeFiles/cmTC_bd5ec.dir/build
+Building Fortran object CMakeFiles/cmTC_bd5ec.dir/test_mpi.f90.o
+/usr/local/bin/gfortran  -I/usr/local/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -c /Users/hao/work/gamil-dycore/build/CMakeFiles/FindMPI/test_mpi.f90 -o CMakeFiles/cmTC_bd5ec.dir/test_mpi.f90.o
+Linking Fortran executable cmTC_bd5ec
+/usr/local/Cellar/cmake/3.15.3/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bd5ec.dir/link.txt --verbose=1
+/usr/local/bin/gfortran      -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk CMakeFiles/cmTC_bd5ec.dir/test_mpi.f90.o  -o cmTC_bd5ec 
+Undefined symbols for architecture x86_64:
+  "_mpi_finalize_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+  "_mpi_init_", referenced from:
+      _MAIN__ in test_mpi.f90.o
+ld: symbol(s) not found for architecture x86_64
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_bd5ec] Error 1
+make: *** [cmTC_bd5ec/fast] Error 2
+
+
+
