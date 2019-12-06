@@ -80,6 +80,7 @@ contains
         diag%total_enstrophy = diag%total_enstrophy + mesh%full_cos_lat(j) * mesh%dlon * mesh%dlat * 0.5 * (diag%vor(i,j) + coef%full_f(j))**2 / (state%gd(i,j) / g)
       end do
     end do
+    diag%total_enstrophy = diag%total_enstrophy * radius**2
     if (ieee_is_nan(diag%total_enstrophy)) then
       call log_error('Total potential enstrophy is NaN!')
     end if
