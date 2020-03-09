@@ -6,7 +6,7 @@ module dycore_mod
   use log_mod
   use types_mod
   use mesh_mod
-  use time_mod
+  use time_mod, old => old_time_idx, new => new_time_idx
   use parallel_mod
   use io_mod
   use diag_mod
@@ -118,16 +118,17 @@ contains
 
   subroutine dycore_restart()
 
-    call restart_read(state(old_time_idx), static)
+    call restart_read(state(old), static)
 
   end subroutine dycore_restart
 
   subroutine dycore_run()
 
-    call iap_transform(state(old_time_idx))
+    call iap_transform(state(old))
 
-    call diag_run(state(old_time_idx))
-    call output(state(old_time_idx))
+    call diag_run(state(old))
+    call history_write(state(old), static, diag)
+    ! call output(state(old_time_idx))
     call log_add_diag('total_mass', diag%total_mass)
     call log_add_diag('total_energy', diag%total_energy)
     call log_step()
@@ -136,8 +137,8 @@ contains
       tag = 0
       call time_integrate()
       call time_advance()
-      call diag_run(state(old_time_idx))
-      call output(state(old_time_idx))
+      call diag_run(state(old))
+      call output(state(old))
       call log_add_diag('total_mass', diag%total_mass)
       call log_add_diag('total_energy', diag%total_energy)
       call log_step()

@@ -21,6 +21,7 @@ module types_mod
   type coef_type
     ! Coriolis coefficient at full meridional grids
     real, allocatable :: half_f(:)
+    real, allocatable :: full_f(:)
     ! Curvature coefficient at full meridional grids 
     real, allocatable :: half_c(:)
     ! Zonal difference coefficient at full/half meridional grids
@@ -88,6 +89,7 @@ contains
     type(coef_type), intent(out) :: coef
 
     allocate(coef%half_f(mesh%num_half_lat))
+    allocate(coef%full_f(mesh%num_full_lat))
     allocate(coef%half_c(mesh%num_half_lat))
     allocate(coef%full_dlon(mesh%num_full_lat))
     allocate(coef%half_dlon(mesh%num_half_lat))
@@ -144,6 +146,7 @@ contains
     type(coef_type), intent(inout) :: coef
 
     if (allocated(coef%half_f)) deallocate(coef%half_f)
+    if (allocated(coef%full_f)) deallocate(coef%full_f)
     if (allocated(coef%half_c)) deallocate(coef%half_c)
     if (allocated(coef%full_dlon)) deallocate(coef%full_dlon)
     if (allocated(coef%half_dlon)) deallocate(coef%half_dlon)

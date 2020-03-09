@@ -38,7 +38,10 @@ contains
       coef%full_dlon(j) = 2.0 * radius * mesh%dlon * mesh%full_cos_lat(j)
       coef%full_dlat(j) = 2.0 * radius * mesh%dlat * mesh%full_cos_lat(j)
     end do
-
+   
+    do j = 1, mesh%num_full_lat
+      coef%full_f(j) = 2.0 * omega * mesh%full_sin_lat(j)
+    end do 
     do j = 1, mesh%num_half_lat
       coef%half_f(j) = 2.0 * omega * mesh%half_sin_lat(j)
       coef%half_c(j) = mesh%half_sin_lat(j) / mesh%half_cos_lat(j) / radius
