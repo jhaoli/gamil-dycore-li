@@ -39,33 +39,33 @@ contains
     cos_alpha = cos(alpha)
     sin_alpha = sin(alpha)
 
-    do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
+    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
         dlon = abs(mesh%full_lon(i) - lon0)
         dlon = min(dlon, 2 * pi - dlon)
-        d = min(R, sqrt(dlon**2 + (mesh%full_lat(j) - lat0)**2))
+        d = min(R, sqrt(dlon**2 + (mesh%half_lat(j) - lat0)**2))
         static%ghs(i,j) = ghs0 * (1.0 - d / R)
       end do
     end do
 
-    if (smooth_mountain) then
-      do k = 1, 30
-        call parallel_fill_halo(static%ghs, all_halo=.true.)
-        do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
-          do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-            static%ghs(i,j) = static%ghs(i,j) + &
-              (0.5  / 4) * (static%ghs(i-1,j  ) + static%ghs(i,  j+1) + static%ghs(i+1,j  ) + static%ghs(i,  j-1) - 4 * static%ghs(i,j)) + &
-              (0.25 / 4) * (static%ghs(i-1,j-1) + static%ghs(i-1,j+1) + static%ghs(i+1,j+1) + static%ghs(i+1,j-1) - 4 * static%ghs(i,j))
-          end do
-        end do
-      end do
-    end if
+    ! if (smooth_mountain) then
+    !   do k = 1, 30
+    !     call parallel_fill_halo(static%ghs, all_halo=.true.)
+    !     do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
+    !       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
+    !         static%ghs(i,j) = static%ghs(i,j) + &
+    !           (0.5  / 4) * (static%ghs(i-1,j  ) + static%ghs(i,  j+1) + static%ghs(i+1,j  ) + static%ghs(i,  j-1) - 4 * static%ghs(i,j)) + &
+    !           (0.25 / 4) * (static%ghs(i-1,j-1) + static%ghs(i-1,j+1) + static%ghs(i+1,j+1) + static%ghs(i+1,j-1) - 4 * static%ghs(i,j))
+    !       end do
+    !     end do
+    !   end do
+    ! end if
 
     call parallel_fill_halo(static%ghs, all_halo=.true.)
 
-    do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
-      cos_lat = mesh%full_cos_lat(j)
-      sin_lat = mesh%full_sin_lat(j)
+    do j = parallel%half_lat_start_idx_no_pole, parallel%half_lat_end_idx_no_pole
+      cos_lat = mesh%half_cos_lat(j)
+      sin_lat = mesh%half_sin_lat(j)
       do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
         cos_lon = mesh%half_cos_lon(i)
         state(1)%u(i,j) = u0 * (cos_lat * cos_alpha + cos_lon * sin_lat * sin_alpha)
@@ -74,7 +74,7 @@ contains
 
     call parallel_fill_halo(state(1)%u, all_halo=.true.)
 
-    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
+    do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
         sin_lon = mesh%full_cos_lon(i)
         state(1)%v(i,j) = - u0 * sin_lon * sin_alpha
@@ -83,9 +83,9 @@ contains
 
     call parallel_fill_halo(state(1)%v, all_halo=.true.)
 
-    do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
-      cos_lat = mesh%full_cos_lat(j)
-      sin_lat = mesh%full_sin_lat(j)
+    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
+      cos_lat = mesh%half_cos_lat(j)
+      sin_lat = mesh%half_sin_lat(j)
       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
         cos_lon = mesh%full_cos_lon(i)
         state(1)%gd(i,j) = gd0 - (radius * omega * u0 + u0**2 * 0.5) * (sin_lat * cos_alpha - cos_lon * cos_lat * sin_alpha)**2 - static%ghs(i,j)

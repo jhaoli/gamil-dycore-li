@@ -64,7 +64,7 @@ contains
     do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
       do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
         diag%total_enstrophy = diag%total_enstrophy + 0.5 * (diag%vor(i,j) + coef%full_f(j))**2 /&
-                               diag%gd_vtx(i,j) / g  * mesh%dlat * mesh%dlon * mesh%full_cos_lat(j)
+                               (diag%gd_vtx(i,j) / g)  * mesh%dlat * mesh%dlon * mesh%full_cos_lat(j)
       end do 
     end do
     diag%total_enstrophy = diag%total_enstrophy * radius**2
