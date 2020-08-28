@@ -33,6 +33,7 @@ module params_mod
   character(256) author
   character(30) :: history_periods(1) = ['6 hours']
   character(30) :: restart_period = ''
+  character(30) :: diffusion_method
 
   character(256) namelist_file
   character(256) :: restart_file = ''
@@ -50,9 +51,6 @@ module params_mod
   ! - isp
   ! - none
   character(30) split_scheme
-
-  logical :: use_zonal_reduce = .false.
-  integer :: zonal_reduce_factors(20) = 0
 
   ! Options:
   ! - center_diff
@@ -96,8 +94,9 @@ module params_mod
     uv_adv_upwind_lat_beta, &
     use_zonal_tend_filter, &
     zonal_tend_filter_cutoff_wavenumber, &
-    use_diffusion, &
-    diffusion_order, &
+    use_diffusion,    &
+    diffusion_order,  &
+    diffusion_method, &
     diffusion_coef
 
 contains

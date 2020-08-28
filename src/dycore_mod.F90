@@ -14,7 +14,6 @@ module dycore_mod
   use diffusion_mod
   use filter_mod
   use weno_mod
-  use forcing_mod
 
   implicit none
 
@@ -124,7 +123,7 @@ contains
     call iap_transform(state(old))
 
     call diag_run(state(old))
-    call history_write(state(old), static, diag)
+    call output(state(old))
     call log_add_diag('total_mass', diag%total_mass)
     call log_add_diag('total_energy', diag%total_energy)
     call log_step()
@@ -204,11 +203,10 @@ contains
       call meridional_pressure_gradient_force_operator(state, tend)
       call zonal_mass_divergence_operator(state, tend)
       call meridional_mass_divergence_operator(state, tend)
-      call force_run(state, tend)
 
       do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
         do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-          tend%du(i,j) = - tend%u_adv_lon(i,j) - tend%u_adv_lat(i,j) + tend%fv(i,j) - tend%u_pgf(i,j) + tend%force%u(i,j)
+          tend%du(i,j) = - tend%u_adv_lon(i,j) - tend%u_adv_lat(i,j) + tend%fv(i,j) - tend%u_pgf(i,j)
         end do
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SMOOTHING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (filter_full_zonal_tend(j)) then
@@ -221,28 +219,26 @@ contains
         end if
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       end do
-      if (test_case == 'held_suarez') then
-        tend%dv(:,:) = 0.0
-      else
-        do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
-          do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-            tend%dv(i,j) = - tend%v_adv_lon(i,j) - tend%v_adv_lat(i,j) - tend%fu(i,j) - tend%v_pgf(i,j) + tend%force%v(i,j)
-          end do
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SMOOTHING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          if (filter_half_zonal_tend(j)) then
-            s1 = sum(tend%dv(i1:i2,j) * state%iap%v(i1:i2,j))
-            if (abs(s1) > filter_inner_product_threshold) then
-              call filter_array_at_half_lat(j, tend%dv(:,j))
-              s2 = sum(tend%dv(i1:i2,j) * state%iap%v(i1:i2,j))
-              tend%dv(i1:i2,j) = tend%dv(i1:i2,j) * s1 / s2
-            end if
-          end if
-          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
+        do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
+          tend%dv(i,j) = - tend%v_adv_lon(i,j) - tend%v_adv_lat(i,j) - tend%fu(i,j) - tend%v_pgf(i,j)
         end do
-      end if 
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SMOOTHING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if (filter_half_zonal_tend(j)) then
+          s1 = sum(tend%dv(i1:i2,j) * state%iap%v(i1:i2,j))
+          if (abs(s1) > filter_inner_product_threshold) then
+            call filter_array_at_half_lat(j, tend%dv(:,j))
+            s2 = sum(tend%dv(i1:i2,j) * state%iap%v(i1:i2,j))
+            tend%dv(i1:i2,j) = tend%dv(i1:i2,j) * s1 / s2
+          end if
+        end if
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      end do
+
       do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
         do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-          tend%dgd(i,j) = - tend%mass_div_lon(i,j) - tend%mass_div_lat(i,j) + tend%force%gd(i,j)
+          tend%dgd(i,j) = - tend%mass_div_lon(i,j) - tend%mass_div_lat(i,j)
         end do
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SMOOTHING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (filter_full_zonal_tend(j)) then
@@ -623,8 +619,7 @@ contains
         new_state%iap%gd(i,j) = sqrt(new_state%gd(i,j))
       end do
     end do
-    call parallel_fill_halo(new_state%iap%gd(:,:), all_halo=.true.)
-    
+
     ! Update IAP wind state.
     do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
       do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
@@ -667,8 +662,26 @@ contains
       call integrator(time_step_size, old, new, all_pass)
     end select
 
+    !     call shapiro_filter2(state(new))
+
     if (use_diffusion) then
-      call ordinary_diffusion(time_step_size, state(new))
+      select case(diffusion_method)
+      case('direct')
+        call ordinary_diffusion_direct(time_step_size, state(new))
+      case('split')
+        call ordinary_diffusion_split(time_step_size, state(new))
+      case('limiter')
+        call ordinary_diffusion_limiter(time_step_size, state(new))
+      case('expand')
+        diffusion_order = 4
+        call ordinary_diffusion_expand(time_step_size, state(new))
+      case('nonlinear')
+        call ordinary_diffusion_nonlinear(time_step_size, state(new))
+      case('nonlinear2')
+        call ordinary_diffusion_nonlinear2(time_step_size, state(new))
+      case default
+        write(6, *) '[Error]: Unkown diffusion method: '// trim(diffusion_method) // '!'
+      end select
     end if
 
   end subroutine time_integrate
