@@ -7,6 +7,7 @@ module diffusion_mod
   use data_mod
   use diag_mod
   use filter_mod
+  use log_mod
 
   implicit none
 
@@ -20,7 +21,7 @@ module diffusion_mod
   public ordinary_diffusion_expand
   public ordinary_diffusion_nonlinear
   public ordinary_diffusion_nonlinear2
-  public shapiro_filter2
+  public shapiro_filter
   public diffusion_final
 
   real, allocatable :: ud(:,:)
@@ -57,7 +58,6 @@ module diffusion_mod
   real, allocatable :: half_h_grad_x(:,:), half_h_grad_y(:,:)
   ! for nonlinear diffusion
   real, allocatable :: tension_strain_full(:,:), shear_strain_corner(:,:), horizontal_viscosity_full(:,:), horizontal_viscosity_corner(:,:)
-  real, allocatable :: uy_2(:,:), uy_4(:,:), vy_2(:,:), vy_4(:,:), uy_6(:,:), vy_6(:,:)
 contains
 
   subroutine diffusion_init()
@@ -78,7 +78,6 @@ contains
     if (.not. allocated(diffusion_coef_u_y))  call parallel_allocate(diffusion_coef_u_y, half_lon=.true.)
     if (.not. allocated(diffusion_coef_v_x))  call parallel_allocate(diffusion_coef_v_x, half_lat=.true.)
     if (.not. allocated(diffusion_coef_v_y))  call parallel_allocate(diffusion_coef_v_y, half_lat=.true.)
-
     if (.not. allocated(gd_x)) call parallel_allocate(gd_x)
     if (.not. allocated(gd_y)) call parallel_allocate(gd_y)
     if (.not. allocated(gdd_x)) call parallel_allocate(gdd_x)
@@ -99,11 +98,15 @@ contains
     if (.not. allocated(half_grad_y)) call parallel_allocate(half_grad_y)
     if (.not. allocated(half_h_grad_x)) call parallel_allocate(half_h_grad_x)
     if (.not. allocated(half_h_grad_y)) call parallel_allocate(half_h_grad_y)
+    
     ! for nonlinear diffusion
     if (.not. allocated(tension_strain_full)) call parallel_allocate(tension_strain_full)
     if (.not. allocated(shear_strain_corner)) call parallel_allocate(shear_strain_corner)
     if (.not. allocated(horizontal_viscosity_full)) call parallel_allocate(horizontal_viscosity_full)
     if (.not. allocated(horizontal_viscosity_corner)) call parallel_allocate(horizontal_viscosity_corner)
+    
+    call log_notice('diffusion module is initialized.')
+
   end subroutine diffusion_init
 
   subroutine divergence_diffusion(dt, diag, state)
@@ -313,9 +316,12 @@ contains
     integer i, j, order, sign
     integer i0
 
-    u(:,:) = state%iap%u(:,:)
-    v(:,:) = state%iap%v(:,:)
-    gd(:,:) = state%iap%gd(:,:)
+    ! u(:,:) = state%iap%u(:,:)
+    ! v(:,:) = state%iap%v(:,:)
+    ! gd(:,:) = state%iap%gd(:,:)
+    u(:,:)  = state%u(:,:)
+    v(:,:)  = state%v(:,:)
+    gd(:,:) = state%gd(:,:)
 
     gd_x(:,:) = gd(:,:)
     gd_y(:,:) = gd(:,:)
@@ -421,19 +427,7 @@ contains
           end if
         end do 
       end do
-      
-    ! Do FFT filter.
-    ! do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
-    !   if (filter_full_zonal_tend(j)) then
-    !     call filter_array_at_full_lat(j, gdd(:,j))
-    !     call filter_array_at_full_lat(j, ud(:,j))
-    !   end if
-    ! end do
-    ! do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
-    !   if (filter_half_zonal_tend(j)) then
-    !     call filter_array_at_half_lat(j, vd(:,j))
-    !   end if
-    ! end do  
+        
     ! diffusion coefficient
     do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
       diffusion_coef_gd_x(j) = 1.0 / dt * (coef%full_dlon(j) / 2)**diffusion_order
@@ -452,35 +446,37 @@ contains
     sign = (-1)**(diffusion_order / 2 + 1)
 
     do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
-      do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-        state%iap%gd(i,j) = state%iap%gd(i,j) + sign * dt * (diffusion_coef_gd_x(j) * gdd_x(i,j) + diffusion_coef_gd_y(j) * gdd_y(i,j) )
-      end do
+      ! do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
+      !   state%iap%gd(i,j) = state%iap%gd(i,j) + sign * dt * (diffusion_coef_gd_x(j) * gdd_x(i,j) + diffusion_coef_gd_y(j) * gdd_y(i,j) )
+      ! end do
       do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-        state%iap%u(i,j) = state%iap%u(i,j) + sign * dt * (diffusion_coef_gd_x(j) * ud_x(i,j) + diffusion_coef_gd_y(j) * ud_y(i,j) )
+        state%u(i,j) = state%u(i,j) + sign * dt * (diffusion_coef_gd_x(j) * ud_x(i,j) + diffusion_coef_gd_y(j) * ud_y(i,j) )
       end do 
     end do
     do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-        state%iap%v(i,j) = state%iap%v(i,j) + sign * dt * (diffusion_coef_v_x(j) * vd_x(i,j) + diffusion_coef_v_y(j) * vd_y(i,j) )
+        state%v(i,j) = state%v(i,j) + sign * dt * (diffusion_coef_v_x(j) * vd_x(i,j) + diffusion_coef_v_y(j) * vd_y(i,j) )
       end do
     end do
 
     ! Transform from IAP to normal state.
-    do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
-      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-        state%gd(i,j) = state%iap%gd(i,j)**2
-      end do
-    end do
-    do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
-      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-        state%u(i,j) = state%iap%u(i,j) * 2.0 / (state%iap%gd(i,j) + state%iap%gd(i+1,j))
-      end do
-    end do
-    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
-      do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-        state%v(i,j) = state%iap%v(i,j) * 2.0 / (state%iap%gd(i,j) + state%iap%gd(i,j+1))
-      end do
-    end do
+    ! do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
+    !   do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
+    !     state%gd(i,j) = state%iap%gd(i,j)**2
+    !   end do
+    ! end do
+    ! do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
+    !   do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
+    !     state%u(i,j) = state%iap%u(i,j) * 2.0 / (state%iap%gd(i,j) + state%iap%gd(i+1,j))
+    !   end do
+    ! end do
+    ! do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
+    !   do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
+    !     state%v(i,j) = state%iap%v(i,j) * 2.0 / (state%iap%gd(i,j) + state%iap%gd(i,j+1))
+    !   end do
+    ! end do
+    call iap_transform(state)
+
   end subroutine ordinary_diffusion_split
 
   subroutine ordinary_diffusion_limiter(dt, state)
@@ -955,9 +951,12 @@ contains
           gd(i,j+1) = gd(i0,j-1)
           gd(i,j+2) = gd(i0,j-2)
         end if 
-        gdd_y(i,j) = -1 / radius**4 * (mesh%full_sin_lat(j) / mesh%full_cos_lat(j)**3 * (gd(i,j+1) - gd(i,j-1)) / (2 * mesh%dlat) + &
-                    (1 + mesh%full_cos_lat(j)**2) / mesh%full_cos_lat(j)**2 * (gd(i,j+1) - 2 * gd(i,j) + gd(i,j-1)) / mesh%dlat**2 +&
-                    2 * mesh%full_sin_lat(j) / mesh%full_cos_lat(j) *(gd(i,j+2) - gd(i,j-2) + 2 * gd(i,j-1) -2 * gd(i,j+1)) / (2 * mesh%dlat**3) -&
+        gdd_y(i,j) = -1 / radius**4 * (mesh%full_sin_lat(j) / mesh%full_cos_lat(j)**3 *&
+                    (gd(i,j+1) - gd(i,j-1)) / (2 * mesh%dlat) + &
+                    (1 + mesh%full_cos_lat(j)**2) / mesh%full_cos_lat(j)**2 *&
+                    (gd(i,j+1) - 2 * gd(i,j) + gd(i,j-1)) / mesh%dlat**2 +&
+                    2 * mesh%full_sin_lat(j) / mesh%full_cos_lat(j) * &
+                    (gd(i,j+2) - gd(i,j-2) + 2 * gd(i,j-1) -2 * gd(i,j+1)) / (2 * mesh%dlat**3) -&
                     (gd(i,j+2) - 4 * gd(i,j+1) + 6 * gd(i,j) - 4 * gd(i,j-1) + gd(i,j-2)) / mesh%dlat**4)
       end do
     end do
@@ -975,10 +974,13 @@ contains
         elseif(j == parallel%full_lat_end_idx_no_pole) then
           u(i,j+2) = u(i0,j)
         end if 
-        ud_y(i,j) = -1 / radius**4 *(mesh%full_sin_lat(j) / mesh%full_cos_lat(j)**3 * (u(i,j+1) - u(i,j-1))/(2*mesh%dlat) + &
-                    (1 + mesh%full_cos_lat(j)**2) / mesh%full_cos_lat(j)**2 * (u(i,j+1) - 2* u(i,j) + u(i,j-1)) / mesh%dlat**2 +&
-                    2 * mesh%full_sin_lat(j) / mesh%full_cos_lat(j) * (u(i,j+2) - u(i,j-2) + 2 * u(i,j-1) - 2 * u(i,j+1))/(2*mesh%dlat**3) -&
-                    (u(i,j+2) - 4 * u(i,j+1) + 6 * u(i,j) - 4 * u(i,j-1) + u(i,j-2)) / mesh%dlat**4 )
+        ud_y(i,j) = -1 / radius**4 *(mesh%full_sin_lat(j) / mesh%full_cos_lat(j)**3 * &
+                    (u(i,j+1) - u(i,j-1)) / (2.0 * mesh%dlat) + &
+                    (1.0 + mesh%full_cos_lat(j)**2) / mesh%full_cos_lat(j)**2* &
+                    (u(i,j+1) - 2.0 * u(i,j) + u(i,j-1)) / mesh%dlat**2 + &
+                    2 * mesh%full_sin_lat(j) / mesh%full_cos_lat(j) * &
+                    (u(i,j+2) - u(i,j-2) + 2.0 * u(i,j-1) - 2.0 * u(i,j+1)) / (2.0 * mesh%dlat**3) - &
+                    (u(i,j+2) - 4.0 * u(i,j+1) + 6.0 * u(i,j) - 4.0 * u(i,j-1) + u(i,j-2)) / mesh%dlat**4)
       end do
     end do   
     ! !==============================================
@@ -1007,19 +1009,7 @@ contains
                     (v(i,j+2) - 4 * v(i,j+1) + 6 * v(i,j) - 4 * v(i,j-1) + v(i,j-2)) / mesh%dlat**4 )
       end do 
     end do 
-    !============================================
-    ! Do FFT filter.
-    ! do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
-    !   if (filter_full_zonal_tend(j)) then
-    !     call filter_array_at_full_lat(j, gdd_x(:,j))
-    !     call filter_array_at_full_lat(j, ud_x(:,j))
-    !   end if
-    ! end do
-    ! do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
-    !   if (filter_half_zonal_tend(j)) then
-    !     call filter_array_at_half_lat(j, vd_x(:,j))
-    !   end if
-    ! end do 
+
     !============================================ 
     ! diffusion coefficient
     do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
@@ -1039,24 +1029,28 @@ contains
       diffusion_coef_v_y(j) = radius**4 / dt / ((1+mesh%half_cos_lat(j)**2) / mesh%half_cos_lat(j)**2 * (4 / mesh%dlat**2) +&
                                 16 / mesh%dlat**4 ) !* beta_y 
     end do 
+    !============================================ 
 
     sign = (-1)**(diffusion_order / 2 + 1)
 
     do j = parallel%full_lat_start_idx, parallel%full_lat_end_idx
-       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-         state%gd(i,j) = state%gd(i,j) + sign * dt * (diffusion_coef_gd_x(j) * gdd_x(i,j) + diffusion_coef_gd_y(j) * gdd_y(i,j))
-       end do
-       do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
+       ! do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
+       !   state%gd(i,j) = state%gd(i,j) + sign * dt * (diffusion_coef_gd_x(j) * gdd_x(i,j) + diffusion_coef_gd_y(j) * gdd_y(i,j))
+       ! end do
+      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
         state%u(i,j) = state%u(i,j) + sign * dt * (diffusion_coef_u_x(j) * ud_x(i,j) + diffusion_coef_u_y(j) * ud_y(i,j))
+        ! state%u(i,j) = state%u(i,j) + sign * dt * diffusion_coef_u_y(j) * ud_y(i,j)
       end do 
     end do
     do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
         state%v(i,j) = state%v(i,j) + sign * dt * (diffusion_coef_v_x(j) * vd_x(i,j) + diffusion_coef_v_y(j) * vd_y(i,j))
+        ! state%v(i,j) = state%v(i,j) + sign * dt * diffusion_coef_v_y(j) * vd_y(i,j)
       end do
     end do
 
     call iap_transform(state)
+
   end subroutine ordinary_diffusion_expand
 
   subroutine ordinary_diffusion_nonlinear(dt, state)
@@ -1284,12 +1278,11 @@ contains
 
     type(state_type), intent(inout) :: state
     integer :: i, j, i0
-    real :: uxm1, uxm2, uxm3, uxm4, uxp1, uxp2, uxp3, uxp4, &
-            vxm1, vxm2, vxm3, vxm4, vxp1, vxp2, vxp3, vxp4
-    real :: uym1, uym2, uym3, uym4, uyp1, uyp2, uyp3, uyp4, &
-            vym1, vym2, vym3, vym4, vyp1, vyp2, vyp3, vyp4          
+    real :: uxm1, uxm2, uxm3, uxp1, uxp2, uxp3, &
+            vxm1, vxm2, vxm3, vxp1, vxp2, vxp3
+    real :: uym1, uym2, uym3, uyp1, uyp2, uyp3, &
+            vym1, vym2, vym3, vyp1, vyp2, vyp3          
     real, parameter :: lat0 = -90.0
-    integer, parameter :: order = 3 ! 3 ,4 not avaliable
 
     u(:,:) = state%u(:,:)
     v(:,:) = state%v(:,:)
@@ -1298,149 +1291,103 @@ contains
 
     do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
       do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-        if (mesh%full_lat_deg(j) < -1.0 * lat0 .or. mesh%full_lat_deg(j) > lat0) then
-          uym1 = u(i,j-1)
-          uym2 = u(i,j-2)
-          uym3 = u(i,j-3)
-          uym4 = u(i,j-4)
-          uyp1 = u(i,j+1)
-          uyp2 = u(i,j+2)
-          uyp3 = u(i,j+3)
-          uyp4 = u(i,j+4)
-          i0 = i + mesh%num_half_lon / 2 ! i0 is the opposite grid of i 
-          if (i0 > mesh%num_half_lon / 2) then
-            i0 = i0 - mesh%num_half_lon / 2
-          end if 
-          if (j == parallel%full_lat_start_idx_no_pole) then
-            uym1 = 0
-            uym2 = -u(i0,j)
-            uym3 = -u(i0,j+1)
-            uym4 = -u(i0,j+2)
-          elseif (j == parallel%full_lat_start_idx_no_pole + 1) then
-            uym2 = 0
-            uym3 = -u(i0,j-1)
-            uym4 = -u(i0,j)
-          elseif (j == parallel%full_lat_start_idx_no_pole + 2) then
-            uym3 = 0
-            uym4 = -u(i0,j-2)
-          elseif (j == parallel%full_lat_start_idx_no_pole + 3) then
-            uym4 = 0
-          elseif (j == parallel%full_lat_end_idx_no_pole) then
-            uyp1 = 0
-            uyp2 = -u(i0,j)
-            uyp3 = -u(i0,j-1)
-            uyp4 = -u(i0,j-2)
-          elseif (j == parallel%full_lat_end_idx_no_pole - 1) then
-            uyp2 = 0
-            uyp3 = -u(i0,j+1)
-            uyp4 = -u(i0,j)
-          elseif (j == parallel%full_lat_end_idx_no_pole - 2) then
-            uyp3 = 0
-            uyp4 = -u(i0,j+2)
-          elseif (j == parallel%full_lat_end_idx_no_pole - 3) then
-            uyp4 = 0
-          end if
-          uxm1 = u(i-1,j)
-          uxm2 = u(i-2,j)
-          uxm3 = u(i-3,j)
-          uxm4 = u(i-4,j)
-          uxp1 = u(i+1,j)
-          uxp2 = u(i+2,j)
-          uxp3 = u(i+3,j)
-          uyp4 = u(i+4,j)
-          if (i == parallel%half_lon_start_idx) then
-            uxm1 = u(mesh%num_half_lon,j)
-            uxm2 = u(mesh%num_half_lon-1,j)
-            uxm3 = u(mesh%num_half_lon-2,j)
-          elseif (i == parallel%half_lon_end_idx) then
-            uxp1 = u(1,j)
-            uxp2 = u(2,j)
-            uxp3 = u(3,j)
-          endif 
-          if (order == 2) then 
-            u_x(i,j) = ( 10.0 * u(i,j) + 4 * (uxm1 + uxp1) - 1.0 * (uxm2 + uxp2) ) / 16.0
-            u_y(i,j) = ( 10.0 * u(i,j) + 4 * (uym1 + uyp1) - 1.0 * (uym2 + uyp2) ) / 16.0
-          elseif(order == 3) then
-            u_x(i,j) = ( 44.0 * u(i,j) + 15.0 * (uxm1 + uxp1) - 6.0 * (uxm2 + uxp2) + 1.0 * (uxm3 + uxp3) ) / 64.0
-            u_y(i,j) = ( 44.0 * u(i,j) + 15.0 * (uym1 + uyp1) - 6.0 * (uym2 + uyp2) + 1.0 * (uym3 + uyp3) ) / 64.0
-          elseif(order == 4) then
-            u_x(i,j) = ( 186.0 * u(i,j) + 56.0 * (uxm1 + uxp1) - 28.0 * (uxm2 + uxp2) + 8.0 * (uxm3 + uxp3) - 1.0 * (uxm4 + uxp4) ) / 256.0
-            u_y(i,j) = ( 186.0 * u(i,j) + 56.0 * (uym1 + uyp1) - 28.0 * (uym2 + uyp2) + 8.0 * (uym3 + uyp3) - 1.0 * (uym4 + uyp4) ) / 256.0
-          end if 
+        uym1 = u(i,j-1)
+        uym2 = u(i,j-2)
+        uym3 = u(i,j-3)
+        uyp1 = u(i,j+1)
+        uyp2 = u(i,j+2)
+        uyp3 = u(i,j+3)
+        i0 = i + mesh%num_half_lon / 2 ! i0 is the opposite grid of i 
+        if (i0 > mesh%num_half_lon / 2) then
+          i0 = i0 - mesh%num_half_lon / 2
+        end if 
+        if (j == parallel%full_lat_start_idx_no_pole) then
+          uym2 = -u(i0,j)
+          uym3 = -u(i0,j+1)
+        elseif (j == parallel%full_lat_start_idx_no_pole + 1) then
+          uym3 = -u(i0,j-1)
+        elseif (j == parallel%full_lat_end_idx_no_pole) then
+          uyp2 = -u(i0,j)
+          uyp3 = -u(i0,j-1)
+        elseif (j == parallel%full_lat_end_idx_no_pole - 1) then
+          uyp3 = -u(i0,j+1)
+        end if
+        uxm1 = u(i-1,j)
+        uxm2 = u(i-2,j)
+        uxm3 = u(i-3,j)
+        uxp1 = u(i+1,j)
+        uxp2 = u(i+2,j)
+        uxp3 = u(i+3,j)
+        if (i == parallel%half_lon_start_idx) then
+          uxm1 = u(mesh%num_half_lon,j)
+          uxm2 = u(mesh%num_half_lon-1,j)
+          uxm3 = u(mesh%num_half_lon-2,j)
+        elseif (i == parallel%half_lon_end_idx) then
+          uxp1 = u(1,j)
+          uxp2 = u(2,j)
+          uxp3 = u(3,j)
+        endif 
+        if (shapiro_filter_order == 2) then 
+          u_x(i,j) = ( 10.0 * u(i,j) + 4 * (uxm1 + uxp1) - 1.0 * (uxm2 + uxp2) ) / 16.0
+          u_y(i,j) = ( 10.0 * u(i,j) + 4 * (uym1 + uyp1) - 1.0 * (uym2 + uyp2) ) / 16.0
+        elseif(shapiro_filter_order == 3) then
+          u_x(i,j) = ( 44.0 * u(i,j) + 15.0 * (uxm1 + uxp1) - 6.0 * (uxm2 + uxp2) + 1.0 * (uxm3 + uxp3) ) / 64.0
+          u_y(i,j) = ( 44.0 * u(i,j) + 15.0 * (uym1 + uyp1) - 6.0 * (uym2 + uyp2) + 1.0 * (uym3 + uyp3) ) / 64.0
         end if 
       end do 
     end do 
     do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
       do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-        if (mesh%half_lat_deg(j) < -1.0 * lat0 .or. mesh%half_lat_deg(j) > lat0) then
-          vym1 = v(i,j-1)
-          vym2 = v(i,j-2)
-          vym3 = v(i,j-3)
-          vym4 = v(i,j-4)
-          vyp1 = v(i,j+1)
-          vyp2 = v(i,j+2)
-          vyp3 = v(i,j+3)
-          vyp4 = v(i,j+4)
-          i0 = i + mesh%num_full_lon / 2 ! i0 is the opposite grid of i 
-          if (i0 > mesh%num_full_lon / 2) then
-            i0 = i0 - mesh%num_full_lon / 2
-          end if 
-          if (j == parallel%half_lat_start_idx) then
-            vym1 = -v(i0,j)
-            vym2 = -v(i0,j+1)
-            vym3 = -v(i0,j+2)
-            vym4 = -v(i0,j+3) 
-          elseif (j == parallel%half_lat_start_idx + 1) then    
-            vym2 = -v(i0,j-1)
-            vym3 = -v(i0,j)
-            vym4 = -v(i0,j+1)
-          elseif (j == parallel%half_lat_start_idx + 2) then    
-            vym3 = -v(i0,j-2)
-            vym4 = -v(i0,j-1)
-          elseif (j == parallel%half_lat_start_idx + 3) then    
-            vym4 = -v(i0,j-3)
-          elseif (j == parallel%half_lat_end_idx) then
-            vyp1 = -v(i0,j)
-            vyp2 = -v(i0,j-1)
-            vyp3 = -v(i0,j-2)
-            vyp4 = -v(i0,j-3)
-          elseif (j == parallel%half_lat_end_idx - 1) then
-            vyp2 = -v(i0,j+1)
-            vyp3 = -v(i0,j)
-            vyp4 = -v(i0,j-1)  
-          elseif (j == parallel%half_lat_end_idx - 2) then
-            vyp3 = -v(i0,j+2)
-            vyp4 = -v(i0,j+1) 
-          elseif (j == parallel%half_lat_end_idx - 3) then
-            vyp4 = -v(i0,j+3) 
-          end if 
-          vxm1 = v(i-1,j)
-          vxm2 = v(i-2,j)
-          vxm3 = v(i-3,j)
-          vxm4 = v(i-4,j)
-          vxp1 = v(i+1,j)
-          vxp2 = v(i+2,j)
-          vxp3 = v(i+3,j)
-          vxp4 = v(i+4,j)
-          if (i == parallel%full_lon_start_idx) then
-            vxm1 = v(mesh%num_full_lon,j)
-            vxm2 = v(mesh%num_full_lon-1,j)
-            vxm3 = v(mesh%num_full_lon-2,j)
-          elseif (i == parallel%half_lon_end_idx) then
-            vxp1 = v(1,j)
-            vxp2 = v(2,j)
-            vxp3 = v(3,j)
-          endif 
-          if (order == 2) then 
-            v_x(i,j) = ( 10.0 * v(i,j) + 4 * (vxm1 + vxp1) - 1.0 * (vxm2 + vxp2) ) / 16.0
-            v_y(i,j) = ( 10.0 * v(i,j) + 4 * (vym1 + vyp1) - 1.0 * (vym2 + vyp2) ) / 16.0     
-          else if (order == 3) then
-            v_x(i,j) = ( 44.0 * v(i,j) + 15.0 * (vxm1 + vxp1) - 6.0 * (vxm2 + vxp2) + 1.0 * (vxm3 + vxp3) ) / 64.0
-            v_y(i,j) = ( 44.0 * v(i,j) + 15.0 * (vym1 + vyp1) - 6.0 * (vym2 + vyp2) + 1.0 * (vym3 + vyp3) ) / 64.0
-          else if (order == 4) then
-            v_x(i,j) = ( 186.0 * v(i,j) + 56.0 * (vxm1 + vxp1) - 28.0 * (vxm2 + vxp2) + 8.0 * (vxm3 + vxp3) - 1.0 * (vxm4 + vxp4) ) / 256.0
-            v_y(i,j) = ( 186.0 * v(i,j) + 56.0 * (vym1 + vyp1) - 28.0 * (vym2 + vyp2) + 8.0 * (vym3 + vyp3) - 1.0 * (vym4 + vyp4) ) / 256.0
-          end if 
+        vym1 = v(i,j-1)
+        vym2 = v(i,j-2)
+        vym3 = v(i,j-3)
+        vyp1 = v(i,j+1)
+        vyp2 = v(i,j+2)
+        vyp3 = v(i,j+3)
+        i0 = i + mesh%num_full_lon / 2 ! i0 is the opposite grid of i 
+        if (i0 > mesh%num_full_lon / 2) then
+          i0 = i0 - mesh%num_full_lon / 2
+        end if 
+        if (j == parallel%half_lat_start_idx) then
+          vym1 = -v(i0,j)
+          vym2 = -v(i0,j+1)
+          vym3 = -v(i0,j+2)
+        elseif (j == parallel%half_lat_start_idx + 1) then    
+          vym2 = -v(i0,j-1)
+          vym3 = -v(i0,j)
+        elseif (j == parallel%half_lat_start_idx + 2) then    
+          vym3 = -v(i0,j-2)
+        elseif (j == parallel%half_lat_end_idx) then
+          vyp1 = -v(i0,j)
+          vyp2 = -v(i0,j-1)
+          vyp3 = -v(i0,j-2)
+        elseif (j == parallel%half_lat_end_idx - 1) then
+          vyp2 = -v(i0,j+1)
+          vyp3 = -v(i0,j)
+        elseif (j == parallel%half_lat_end_idx - 2) then
+          vyp3 = -v(i0,j+2)
+        end if 
+        vxm1 = v(i-1,j)
+        vxm2 = v(i-2,j)
+        vxm3 = v(i-3,j)
+        vxp1 = v(i+1,j)
+        vxp2 = v(i+2,j)
+        vxp3 = v(i+3,j)
+        if (i == parallel%full_lon_start_idx) then
+          vxm1 = v(mesh%num_full_lon,j)
+          vxm2 = v(mesh%num_full_lon-1,j)
+          vxm3 = v(mesh%num_full_lon-2,j)
+        elseif (i == parallel%half_lon_end_idx) then
+          vxp1 = v(1,j)
+          vxp2 = v(2,j)
+          vxp3 = v(3,j)
+        endif 
+        if (shapiro_filter_order == 2) then 
+          v_x(i,j) = ( 10.0 * v(i,j) + 4 * (vxm1 + vxp1) - 1.0 * (vxm2 + vxp2) ) / 16.0
+          v_y(i,j) = ( 10.0 * v(i,j) + 4 * (vym1 + vyp1) - 1.0 * (vym2 + vyp2) ) / 16.0     
+        else if (shapiro_filter_order == 3) then
+          v_x(i,j) = ( 44.0 * v(i,j) + 15.0 * (vxm1 + vxp1) - 6.0 * (vxm2 + vxp2) + 1.0 * (vxm3 + vxp3) ) / 64.0
+          v_y(i,j) = ( 44.0 * v(i,j) + 15.0 * (vym1 + vyp1) - 6.0 * (vym2 + vyp2) + 1.0 * (vym3 + vyp3) ) / 64.0
         end if 
       end do 
     end do 
@@ -1451,118 +1398,6 @@ contains
 
     call iap_transform(state)
   end subroutine shapiro_filter
-
-  subroutine shapiro_filter2(state)
-    type(state_type), intent(inout) :: state
-    integer :: i, j, i0
-    real :: uy_1f, uy_1b, uy_3f, uy_3b, &
-            vy_1f, vy_1b, vy_3f, vy_3b, &
-            uy_5f, uy_5b, vy_5f, vy_5b
-    integer, parameter :: order = 2
-    allocate(uy_2(parallel%half_lon_start_idx: parallel%half_lon_end_idx, &
-                  parallel%full_lat_start_idx_no_pole: parallel%full_lat_end_idx_no_pole))
-
-    allocate(uy_4(parallel%half_lon_start_idx: parallel%half_lon_end_idx, &
-                  parallel%full_lat_start_idx_no_pole: parallel%full_lat_end_idx_no_pole))
-
-    allocate(uy_6(parallel%half_lon_start_idx: parallel%half_lon_end_idx, &
-                  parallel%full_lat_start_idx_no_pole: parallel%full_lat_end_idx_no_pole))
-
-    allocate(vy_2(parallel%full_lon_start_idx: parallel%full_lon_end_idx, &
-                  parallel%half_lat_start_idx: parallel%half_lat_end_idx))
-
-    allocate(vy_4(parallel%full_lon_start_idx: parallel%full_lon_end_idx, &
-                  parallel%half_lat_start_idx: parallel%half_lat_end_idx))
-
-    allocate(vy_6(parallel%full_lon_start_idx: parallel%full_lon_end_idx, &
-                  parallel%half_lat_start_idx: parallel%half_lat_end_idx))
-    u(:,:) = state%u(:,:)
-    v(:,:) = state%v(:,:)
-
-    !u
-    do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
-      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-!         i0 = i + mesh%num_half_lon / 2 ! i0 is the opposite grid of i 
-!         if (i0 > mesh%num_half_lon / 2) then
-!           i0 = i0 - mesh%num_half_lon / 2
-!         end if
-!         if(j == parallel%full_lat_start_idx) then
-!           u(i,j-1) = -u(i0,j+1)
-!         elseif(j == parallel%full_lat_end_idx) then
-!           u(i,j+1) = -u(i0,j-1)
-!         endif 
-        uy_1f = u(i,j+1) - u(i,j) 
-        uy_1b = u(i,j) - u(i,j-1)
-        uy_2(i,j) = uy_1f - uy_1b
-      end do 
-    end do
-    do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
-      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-        uy_3f = (uy_2(i,j+1) - uy_2(i,j)) 
-        uy_3b = (uy_2(i,j) - uy_2(i,j-1))
-        uy_4(i,j) = uy_3f - uy_3b
-      end do 
-    end do 
-
-    do j = parallel%full_lat_start_idx_no_pole, parallel%full_lat_end_idx_no_pole
-      do i = parallel%half_lon_start_idx, parallel%half_lon_end_idx
-        uy_5f = (uy_4(i,j+1) - uy_4(i,j)) 
-        uy_5b = (uy_4(i,j) - uy_4(i,j-1))
-        uy_6(i,j) = uy_5f - uy_5b
-      end do 
-    end do 
-    if(order == 2) then
-      state%u(:,:) = state%u(:,:) - uy_4(:,:) / 16.0
-    elseif(order == 3) then
-      state%u(:,:) = state%u(:,:) + uy_6(i,j) / 64.0
-    end if
-    !v 
-    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
-      do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-!         i0 = i + mesh%num_full_lon / 2 ! i0 is the opposite grid of i 
-!         if (i0 > mesh%num_full_lon / 2) then
-!           i0 = i0 - mesh%num_full_lon / 2
-!         end if
-!         if(j == parallel%half_lat_start_idx) then
-!           v(i,j-1) = -v(i0,j+1)
-!         elseif(j == parallel%half_lat_end_idx) then
-!           v(i,j+1) = -v(i0,j-1)
-!         endif 
-        vy_1f = (v(i,j+1) - v(i,j)) 
-        vy_1b = (v(i,j) - v(i,j-1)) 
-        vy_2(i,j) = vy_1f - vy_1b
-      end do
-    end do 
-    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
-      do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-        vy_3f = (vy_2(i,j+1) - vy_2(i,j)) 
-        vy_3b = (vy_2(i,j) - vy_2(i,j-1)) 
-        vy_4(i,j) = vy_3f - vy_3b
-      end do 
-    end do
-    do j = parallel%half_lat_start_idx, parallel%half_lat_end_idx
-      do i = parallel%full_lon_start_idx, parallel%full_lon_end_idx
-        vy_5f = (vy_4(i,j+1) - vy_4(i,j)) 
-        vy_5b = (vy_4(i,j) - vy_4(i,j-1)) 
-        vy_6(i,j) = vy_5f - vy_5b
-        state%v(i,j) = state%v(i,j) + vy_6(i,j) / 64.0
-      end do 
-    end do 
-    if(order == 2) then
-      state%v(:,:) = state%v(:,:) - vy_4(:,:) / 16.0
-    elseif(order == 3) then
-      state%v(:,:) = state%v(:,:) + vy_4(:,:) / 64.0
-    end if 
-
-    call parallel_fill_halo(state%u,  all_halo=.true.)
-    call parallel_fill_halo(state%v,  all_halo=.true.)
-
-    call iap_transform(state)
-
-    deallocate(uy_2, vy_2)
-    deallocate(uy_4, vy_4)
-    deallocate(uy_6, vy_6)
-  end subroutine shapiro_filter2
 
   subroutine diffusion_final()
 

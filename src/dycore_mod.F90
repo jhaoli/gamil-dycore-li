@@ -662,8 +662,6 @@ contains
       call integrator(time_step_size, old, new, all_pass)
     end select
 
-    !     call shapiro_filter2(state(new))
-
     if (use_diffusion) then
       select case(diffusion_method)
       case('direct')
@@ -682,6 +680,8 @@ contains
       case default
         write(6, *) '[Error]: Unkown diffusion method: '// trim(diffusion_method) // '!'
       end select
+    else if (use_shapiro_filter) then
+      call shapiro_filter(state(new))
     end if
 
   end subroutine time_integrate
