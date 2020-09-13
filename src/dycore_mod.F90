@@ -123,7 +123,8 @@ contains
     call iap_transform(state(old))
 
     call diag_run(state(old))
-    call output(state(old))
+    ! call output(state(old))
+    call history_write(state(old), static, diag)
     call log_add_diag('total_mass', diag%total_mass)
     call log_add_diag('total_energy', diag%total_energy)
     call log_step()
@@ -664,26 +665,23 @@ contains
 
     if (use_diffusion) then
       select case(diffusion_method)
-      case('direct')
-        call ordinary_diffusion_direct(time_step_size, state(new))
-      case('split')
-        call ordinary_diffusion_split(time_step_size, state(new))
+      ! case('direct')
+      !   call ordinary_diffusion_direct(time_step_size, state(new))
       case('limiter')
         call ordinary_diffusion_limiter(time_step_size, state(new))
-      case('expand')
-        diffusion_order = 4
-        call ordinary_diffusion_expand(time_step_size, state(new))
-      case('nonlinear')
-        call ordinary_diffusion_nonlinear(time_step_size, state(new))
-      case('nonlinear2')
-        call ordinary_diffusion_nonlinear2(time_step_size, state(new))
+      case('direct')
+        call ordinary_diffusion_direct(time_step_size, state(new))
+      ! case('nonlinear')
+      !   call ordinary_diffusion_nonlinear(time_step_size, state(new))
+      ! case('nonlinear2')
+      !   call ordinary_diffusion_nonlinear2(time_step_size, state(new))
+      case('shapiro_filter')
+        call shapiro_filter(state(new))
       case default
         write(6, *) '[Error]: Unkown diffusion method: '// trim(diffusion_method) // '!'
       end select
-    else if (use_shapiro_filter) then
-      call shapiro_filter(state(new))
     end if
-
+    
   end subroutine time_integrate
 
   subroutine csp2_splitting()

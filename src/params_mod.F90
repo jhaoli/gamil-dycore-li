@@ -17,8 +17,6 @@ module params_mod
 
   logical :: use_diffusion = .false.
   real diffusion_coef
-  integer :: diffusion_order = 2
-  logical :: use_shapiro_filter = .false.
   integer :: shapiro_filter_order = 3
 
   integer :: run_days    = 0
@@ -97,10 +95,8 @@ module params_mod
     use_zonal_tend_filter, &
     zonal_tend_filter_cutoff_wavenumber, &
     use_diffusion,    &
-    diffusion_order,  &
     diffusion_method, &
     diffusion_coef,   &
-    use_shapiro_filter,&
     shapiro_filter_order
 
 contains
